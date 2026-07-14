@@ -458,6 +458,13 @@ app.MapPost("/admin/roles", async (HttpContext ctx) =>
     return Results.Json(new { role, permissions = store.RolePermissions[role] });
 });
 
+app.MapGet("/admin/roles", (HttpContext ctx) =>
+{
+    var guard = RequireAdmin(ctx, out _);
+    if (guard is not null) return guard;
+    return Results.Json(store.RolePermissions.Select(kv => new { role = kv.Key, permissions = kv.Value }));
+});
+
 app.MapGet("/health", () => Results.Json(new { status = "ok", issuer, kid = jwt.Kid }));
 
 Console.WriteLine($"[sts] issuer   = {issuer}");
