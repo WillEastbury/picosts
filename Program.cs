@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Linq;
 using Sts;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,8 +15,14 @@ var redirects   = Env("STS_CLIENT_REDIRECTS", "http://127.0.0.1:8090/callback.ht
                     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 var postLogouts = Env("STS_CLIENT_POSTLOGOUT", "http://127.0.0.1:8090/,http://localhost:8090/")
                     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-var corsOrigins = Env("STS_CORS_ORIGINS", "http://127.0.0.1:8090,http://localhost:8090")
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+// CORS origins default to the *origins* of STS_CLIENT_REDIRECTS, so setting only
+// STS_CLIENT_REDIRECTS (the documented "point this at your app" knob) is enough for the
+// browser OIDC flow to work; STS_CORS_ORIGINS remains available to override/extend that.
+string OriginOf(string url) { try { var u = new Uri(url); return u.GetLeftPart(UriPartial.Authority); } catch { return null; } }
+var redirectOrigins = redirects.Select(OriginOf).Where(o => o != null).Distinct().ToArray();
+var corsOrigins = Environment.GetEnvironmentVariable("STS_CORS_ORIGINS") is { Length: > 0 } corsEnv
+    ? corsEnv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    : redirectOrigins;
 
 Directory.CreateDirectory(dataDir);
 var jwt = new Jwt(Path.Combine(dataDir, "signing.key.pem"));
