@@ -31,6 +31,14 @@ string adminPw = Env("STS_ADMIN_PASSWORD", "");
 bool generatedAdminPw = adminPw.Length == 0;
 if (generatedAdminPw) adminPw = Crypto.RandomToken(9);
 store.SeedDefaults(redirects, postLogouts, adminPw);
+string seedUsersFile = Env("STS_SEED_USERS_FILE", "");
+if (seedUsersFile.Length > 0 && File.Exists(seedUsersFile))
+{
+    var seedUsers = JsonSerializer.Deserialize<List<SeedUser>>(
+        File.ReadAllText(seedUsersFile),
+        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+    store.SeedUsers(seedUsers);
+}
 
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
     p.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));

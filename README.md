@@ -30,6 +30,23 @@ to the console). Signing key + data persist under `STS_DATA_DIR`.
 | `STS_CLIENT_POSTLOGOUT` | `http://127.0.0.1:8090/,...` | Allowed post-logout redirect URIs |
 | `STS_CORS_ORIGINS` | `http://127.0.0.1:8090,...` | Origins allowed to call `/token` and `/userinfo` |
 | `STS_ADMIN_PASSWORD` | *(random, printed)* | Seed admin password |
+| `STS_SEED_USERS_FILE` | *(none)* | JSON file of users seeded only when their username is missing |
+
+Seed files use this shape:
+
+```json
+[
+  {
+    "username": "example",
+    "password": "initial password",
+    "tenantId": "default",
+    "roles": ["user"]
+  }
+]
+```
+
+Mount seed files from a secret rather than committing credentials. Existing
+users are never overwritten, so password changes survive restarts.
 
 ## Endpoints
 

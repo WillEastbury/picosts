@@ -17,6 +17,15 @@ public sealed class User
     public bool Disabled { get; set; }
 }
 
+public sealed class SeedUser
+{
+    public string Username { get; set; } = "";
+    public string Password { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string TenantId { get; set; } = "default";
+    public List<string> Roles { get; set; } = new();
+}
+
 /// <summary>A group of principals. Nestable via ParentId; roles may be assigned to a group,
 /// and are inherited by members of the group and of its descendant groups.</summary>
 public sealed class Group
@@ -186,6 +195,32 @@ public sealed class Store
                 PasswordHash = Crypto.HashPassword(adminPassword), Roles = new() { "admin" },
             };
             Users[admin.Id] = admin;   // key by Id (sub) so UserById works
+            changed = true;
+        }
+        if (changed) Save();
+    }
+
+    public void SeedUsers(IEnumerable<SeedUser> seeds)
+    {
+        bool changed = false;
+        foreach (var seed in seeds)
+        {
+            if (string.IsNullOrWhiteSpace(seed.Username) || string.IsNullOrEmpty(seed.Password))
+                continue;
+            if (Users.Values.Any(u =>
+                u.TenantId == seed.TenantId &&
+                string.Equals(u.Username, seed.Username, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            var user = new User
+            {
+                Username = seed.Username.Trim(),
+                Email = seed.Email.Trim(),
+                TenantId = string.IsNullOrWhiteSpace(seed.TenantId) ? "default" : seed.TenantId.Trim(),
+                PasswordHash = Crypto.HashPassword(seed.Password),
+                Roles = seed.Roles.Count > 0 ? seed.Roles.Distinct().ToList() : new() { "user" },
+            };
+            Users[user.Id] = user;
             changed = true;
         }
         if (changed) Save();
