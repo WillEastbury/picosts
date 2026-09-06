@@ -306,6 +306,36 @@ app.MapPost("/account/totp/verify", async (HttpContext ctx) =>
     return Results.Json(new { enabled = true });
 });
 
+app.MapPost("/account/password", async (HttpContext ctx) =>
+{
+    var u = BearerUser(ctx);
+    if (u == null) return Results.Unauthorized();
+    var dto = await ctx.Request.ReadFromJsonAsync<Dictionary<string, JsonElement>>();
+    if (dto == null ||
+        !dto.TryGetValue("currentPassword", out var currentElement) ||
+        currentElement.ValueKind != JsonValueKind.String ||
+        !dto.TryGetValue("newPassword", out var newElement) ||
+        newElement.ValueKind != JsonValueKind.String)
+        return Results.Json(new { error = "current_and_new_password_required" }, statusCode: 400);
+
+    string currentPassword = currentElement.GetString() ?? "";
+    string newPassword = newElement.GetString() ?? "";
+    if (!Crypto.VerifyPassword(currentPassword, u.PasswordHash))
+        return Results.Json(new { error = "invalid_current_password" }, statusCode: 400);
+    if (newPassword.Length is < 8 or > 128 ||
+        !newPassword.Any(char.IsUpper) ||
+        !newPassword.Any(char.IsLower) ||
+        !newPassword.Any(char.IsDigit))
+        return Results.Json(new { error = "password_policy_failed" }, statusCode: 400);
+    if (Crypto.VerifyPassword(newPassword, u.PasswordHash))
+        return Results.Json(new { error = "password_unchanged" }, statusCode: 400);
+
+    u.PasswordHash = Crypto.HashPassword(newPassword);
+    store.RevokeUserRefresh(u.Id);
+    store.Save();
+    return Results.NoContent();
+});
+
 // ================= admin (RBAC-guarded) =================
 IResult? RequireAdmin(HttpContext ctx, out User? admin)
 {

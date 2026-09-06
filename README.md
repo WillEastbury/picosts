@@ -47,6 +47,9 @@ OIDC / OAuth2:
 - `GET  /logout` — end session (validated `post_logout_redirect_uri`)
 
 Account (Bearer):
+- `POST /account/password` — change the signed-in user's password; requires
+  `currentPassword` and a new 8–128 character password containing upper-case,
+  lower-case, and numeric characters
 - `POST /account/totp/enroll` — returns TOTP `secret` + `otpauth_uri` (enroll in any authenticator / `BareMetal.Authenticator`)
 - `POST /account/totp/verify` — `code` → enables TOTP (then required at login)
 
