@@ -177,6 +177,16 @@ public sealed class Store
             RolePermissions["user"] = new() { "read" };
             changed = true;
         }
+        if (!RolePermissions.ContainsKey("parent"))
+        {
+            RolePermissions["parent"] = new() { "homeschool:read", "homeschool:write" };
+            changed = true;
+        }
+        if (!RolePermissions.ContainsKey("school"))
+        {
+            RolePermissions["school"] = new() { "homeschool:read", "homeschool:write" };
+            changed = true;
+        }
         if (!Clients.ContainsKey("spa"))
         {
             Clients["spa"] = new Client
