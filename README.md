@@ -1,18 +1,14 @@
-# forge STS — a standalone OIDC/OAuth2 Security Token Service
+# PicoSTS
 
-A small, self-contained .NET (minimal API) identity provider that works **out of the
+A small, self-contained OIDC/OAuth2 security token service built with .NET minimal
+APIs. It works **out of the
 box** with the BareMetalJsTools auth family: `BareMetal.Auth` (OIDC/OAuth2 client),
 `BareMetal.Tokens` (JWT), `BareMetal.Session`, `BareMetal.RBAC`, `BareMetal.Authenticator`
-(TOTP) and `BareMetal.Tenant` (multi-tenancy). Generated forge apps use it as their
-shared STS (a common identity across every subsystem).
-
-> Language note: this C# implementation is the reference. It will be ported to
-> **picoSTS in C**, hosted under **PicoWeb** with its hardware-accelerated crypto.
+(TOTP) and `BareMetal.Tenant` (multi-tenancy).
 
 ## Run
 
 ```
-cd sts
 dotnet build sts.csproj -c Release
 $env:ASPNETCORE_URLS='http://127.0.0.1:5100'
 $env:STS_ISSUER='http://127.0.0.1:5100'
